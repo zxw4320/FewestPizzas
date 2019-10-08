@@ -1,22 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FewestPizzas
 {
     public class TopFavoritesShare : IFewestPizzas
     {
-        private Dictionary<int, List<PizzaPreferences>> likes;
-        private Dictionary<Pizza, List<PizzaTopping>> pizzas;
-        private List<PizzaPreferences> satisfied;
-
         public int Run(int maxToppings, PizzaPreferences[] prefs)
         {
             if (maxToppings <= 0)
             {
-                throw new System.Exception("Invalid number of toppings specified. Must be greater than 0.");
+                throw new Exception("Invalid number of toppings specified. Must be 0 < x <= 16.");
             }
            
-            likes = new Dictionary<int, List<PizzaPreferences>>();
+            // create a dictionary of toppings to all the people who like it
+            var likes = new Dictionary<int, List<PizzaPreferences>>();
             foreach(var pref in prefs)
             {
                 foreach(int like in pref.likes)
@@ -32,56 +30,84 @@ namespace FewestPizzas
                 }
             }
 
-            pizzas = new Dictionary<Pizza, List<PizzaTopping>>();
-            satisfied = new List<PizzaPreferences>();
-            AddNewPizza(likes.First().Key);
-            foreach (var topping in likes.Keys)
+            // if a pizza with one topping with satisfy everyone
+            if(likes.Any(x => x.Value.Count == prefs.Length))
             {
-                if (likes[topping].Count == prefs.Length) // This topping will satisfy everyone
+                return 1;
+            }
+
+            // find the minimum number of pizzas that will satisfy everyone
+            var possiblePizzaCombinations = PossiblePizzaCombinations(AllPizzas(likes.Keys.ToList()));
+            var minPizzas = prefs.Length <= likes.Keys.Count ? prefs.Length : likes.Keys.Count;
+            foreach (var combo in possiblePizzaCombinations)
+            {
+                if(combo.Count < minPizzas)
                 {
-                    return 1;
-                }
-                else if (!likes[topping].All(x => satisfied.Contains(x))) // Someone who wants this topping has yet to be satisfied
-                {
-                    if (pizzas.Last().Key.toppings.Count() == maxToppings || pizzas.Last().Key.toppings.Count() == 0 || pizzas.Last().Value.Contains((PizzaTopping)topping))
+                    var satisfied = new HashSet<PizzaPreferences>();
+                    foreach(var pizza in combo)
                     {
-                        AddNewPizza(topping);
-                    }
-                    else
-                    {
-                        pizzas.Last().Key.toppings.Add((PizzaTopping)topping);
-                        foreach (var pref in likes[topping])
+                        foreach(var pref in prefs)
                         {
-                            if (!satisfied.Contains(pref))
+                            if(pref.likes.Intersect(pizza.toppings).Count() > 0 && pref.hates.Intersect(pizza.toppings).Count() == 0)
                             {
                                 satisfied.Add(pref);
                             }
-                            pizzas.Last().Value.AddRange(pref.hates.Where(x => !pizzas.Last().Value.Contains(x)));
                         }
+                    }
+                    if(satisfied.Count() == prefs.Length)
+                    {
+                        minPizzas = combo.Count;
                     }
                 }
             }
-            
-            return pizzas.Count;
+
+            // worst case is either each person gets their own or one pizza for every liked topping
+            return minPizzas;
         }
 
-        private void AddNewPizza(int topping)
+        // find all possible pizzas
+        private List<Pizza> AllPizzas(List<int> pizzaToppings)
         {
-            var pizza = new Pizza();
-            pizza.toppings = new List<PizzaTopping>
+            List<Pizza> result = new List<Pizza>();
+            
+            result.Add(new Pizza());
+            result.Last().toppings.Add((PizzaTopping)pizzaToppings.First());
+            if (pizzaToppings.Count == 1)
+                return result;
+
+            List<Pizza> tailCombos = AllPizzas(pizzaToppings.Skip(1).ToList());
+            tailCombos.ForEach(combo =>
             {
-                (PizzaTopping)topping
-            };
-            var dislikes = new List<PizzaTopping>();
-            foreach (var pref in likes[topping])
+                result.Add(combo);
+                var p = new Pizza();
+                p.toppings.Add((PizzaTopping)pizzaToppings.First());
+                p.toppings.AddRange(combo.toppings);
+                result.Add(p);
+            });
+
+            return result;
+        }
+
+        // find all possible pizza combinations
+        private List<List<Pizza>> PossiblePizzaCombinations(List<Pizza> pizzas)
+        {
+            List<List<Pizza>> result = new List<List<Pizza>>();
+
+            result.Add(new List<Pizza>());
+            result.Last().Add(pizzas.First());
+            if (pizzas.Count == 1)
+                return result;
+
+            List<List<Pizza>> tailCombos = PossiblePizzaCombinations(pizzas.Skip(1).ToList());
+            tailCombos.ForEach(combo =>
             {
-                if (!satisfied.Contains(pref))
-                {
-                    satisfied.Add(pref);
-                }
-                dislikes.AddRange(pref.hates.Where(x => !dislikes.Contains(x)));
-            }
-            pizzas.Add(pizza, dislikes);
+                // TODO wand to screen out multiple pizzas with the same topping
+                result.Add(new List<Pizza>(combo));
+                combo.Add(pizzas.First());
+                result.Add(combo);
+            });
+
+            return result;
         }
     }
 }
