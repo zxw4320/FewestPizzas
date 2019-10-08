@@ -37,7 +37,9 @@ namespace FewestPizzas
             }
 
             // find the minimum number of pizzas that will satisfy everyone
-            var possiblePizzaCombinations = PossiblePizzaCombinations(AllPizzas(likes.Keys.ToList()));
+            var likedToppings = likes.Keys.ToList();
+            var allPizzas = AllPizzas(likedToppings);
+            var possiblePizzaCombinations = PossiblePizzaCombinations(allPizzas);
             var minPizzas = prefs.Length <= likes.Keys.Count ? prefs.Length : likes.Keys.Count;
             foreach (var combo in possiblePizzaCombinations)
             {
@@ -69,9 +71,15 @@ namespace FewestPizzas
         private List<Pizza> AllPizzas(List<int> pizzaToppings)
         {
             List<Pizza> result = new List<Pizza>();
-            
-            result.Add(new Pizza());
-            result.Last().toppings.Add((PizzaTopping)pizzaToppings.First());
+
+            var pizza = new Pizza
+            {
+                toppings = new List<PizzaTopping>
+            {
+                (PizzaTopping)pizzaToppings.First()
+            }
+            };
+            result.Add(pizza);
             if (pizzaToppings.Count == 1)
                 return result;
 
@@ -79,8 +87,13 @@ namespace FewestPizzas
             tailCombos.ForEach(combo =>
             {
                 result.Add(combo);
-                var p = new Pizza();
-                p.toppings.Add((PizzaTopping)pizzaToppings.First());
+                var p = new Pizza
+                {
+                    toppings = new List<PizzaTopping>
+                {
+                    (PizzaTopping)pizzaToppings.First()
+                }
+                };
                 p.toppings.AddRange(combo.toppings);
                 result.Add(p);
             });
@@ -99,13 +112,15 @@ namespace FewestPizzas
                 return result;
 
             List<List<Pizza>> tailCombos = PossiblePizzaCombinations(pizzas.Skip(1).ToList());
-            tailCombos.ForEach(combo =>
+            foreach(var combo in tailCombos)
             {
-                // TODO wand to screen out multiple pizzas with the same topping
                 result.Add(new List<Pizza>(combo));
-                combo.Add(pizzas.First());
-                result.Add(combo);
-            });
+                if(!combo.Any(x => x.toppings.Intersect(pizzas.First().toppings).Count() != 0))
+                {
+                    combo.Add(pizzas.First());
+                    result.Add(combo);
+                }                
+            }
 
             return result;
         }
