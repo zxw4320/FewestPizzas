@@ -39,7 +39,7 @@ you can now order 1 pizza with GreenPepper to satisfy everyone... in theory.
 
 Replace TopFavoritesShare with your own implementation and give it a unique name.  You can test it from the command like with a specific set of preferences in JSON format, or have the framework randomly generate one.  For example:
 ```
-> FewestPizzas/bin/Debug> .\FewestPizzas.exe 3 random 5
+> FewestPizzas/bin/Debug> FewestPizzas.exe 3 random 5
 
 Using random seed 381319968
 
@@ -57,16 +57,13 @@ TopFavoritesShare (in 9 ms) << 4
 ```
 The 3 in the command line arguments above says pizzas can have a maximum of 3 toppings, and it will generate 5 guests worth of preferences.  You can provide the random seed that is printed as the last argument to repeat a specific set of preferences; i.e.:
 
-> FewestPizzas/bin/Debug> .\FewestPizzas.exe pizza 3 random 5 381319968
+> FewestPizzas/bin/Debug> FewestPizzas.exe 3 random 5 381319968
 
 will run the algorithm(s) with the same input as previously.  To run with a specific set of preferences, in place of ‘random’ and the number of guests, you can put the preferences array as JSON, e.g. with cmd:
 ```
-> .\FewestPizzas.exe 3 [{"likes":["Beef","GreenOlive"],"hates":["GreenPepper"]},{"likes":["Jalapeno","Anchovies"],"hates":["Chicken"]}]
+> FewestPizzas.exe 3 [{"likes":["Beef","GreenOlive"],"hates":["GreenPepper"]},{"likes":["Jalapeno","Anchovies"],"hates":["Chicken"]}]
 ```
 Powershell is more of a pain with the quotes:
 ```
-> .\FewestPizzas.exe 3 '[{\"likes\":[\"Beef\",\"GreenOlive\"],\"hates\":[\"GreenPepper\"]},{\"likes\":[\"Jalapeno\",\"Anchovies\"],\"hates\":[\"Chicken\"]}]'
+> FewestPizzas.exe 3 '[{\"likes\":[\"Beef\",\"GreenOlive\"],\"hates\":[\"GreenPepper\"]},{\"likes\":[\"Jalapeno\",\"Anchovies\"],\"hates\":[\"Chicken\"]}]'
 ```
- 
-
-
